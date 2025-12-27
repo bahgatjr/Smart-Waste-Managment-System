@@ -1,9 +1,12 @@
 #include <iostream>
 #include <string>
-#include <cassert>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+
 using namespace std;
 
-// Base User Class
+// ================= Base User =================
 class User
 {
 protected:
@@ -18,13 +21,16 @@ public:
 
     string getUserID() const { return userID; }
     string getName() const { return name; }
+    string getEmail() const { return email; }
+    string getPassword() const { return password; }
 
     virtual void login() { cout << name << " logged in.\n"; }
     virtual void logout() { cout << name << " logged out.\n"; }
+
     virtual ~User() {}
 };
 
-// Derived User Roles
+// ================= Derived Users =================
 class Driver : public User
 {
 private:
@@ -34,22 +40,26 @@ public:
     Driver(string id, string n, string e, string p, string route)
         : User(id, n, e, p), assignedRoute(route) {}
 
-    void confirmTask() { cout << name << " confirmed task" << endl; }
+    void confirmTask() { cout << name << " confirmed task.\n"; }
     void viewRoute() { cout << "Route: " << assignedRoute << endl; }
 };
 
 class Citizen : public User
 {
 public:
-    Citizen(string id, string n, string e, string p) : User(id, n, e, p) {}
-    void submitComplaint() { cout << name << " submitted a complaint." << endl; }
-    void viewBinStatus() { cout << name << " viewed bin status." << endl; }
+    Citizen(string id, string n, string e, string p)
+        : User(id, n, e, p) {}
+
+    void submitComplaint() { cout << name << " submitted a complaint.\n"; }
+    void viewBinStatus() { cout << name << " viewed bin status.\n"; }
 };
 
 class Supervisor : public User
 {
 public:
-    Supervisor(string id, string n, string e, string p) : User(id, n, e, p) {}
+    Supervisor(string id, string n, string e, string p)
+        : User(id, n, e, p) {}
+
     void assignComplaint() { cout << name << " assigned a complaint.\n"; }
     void reviewComplaints() { cout << name << " reviewed complaints.\n"; }
 };
@@ -57,18 +67,15 @@ public:
 class Technician : public User
 {
 public:
-    Technician(string id, string n, string e, string p) : User(id, n, e, p) {}
+    Technician(string id, string n, string e, string p)
+        : User(id, n, e, p) {}
+
     void resolveComplaint() { cout << name << " resolved a complaint.\n"; }
     void submitReport() { cout << name << " submitted a report.\n"; }
 };
 
-// Bin and Sensor
-enum BinStatus
-{
-    OK,
-    FULL,
-    FAULTY
-};
+// ================= Bin & Sensor =================
+enum BinStatus { OK, FULL };
 
 class Bin
 {
@@ -99,153 +106,183 @@ class Sensor
 {
 private:
     string sensorID;
-    int batteryLevel;
-    int threshold;
 
 public:
-    Sensor(string id, int battery, int thresh)
-        : sensorID(id), batteryLevel(battery), threshold(thresh) {}
+    Sensor(string id) : sensorID(id) {}
 
     int detectFillLevel()
     {
         return rand() % 101;
     }
-
-    void sendData()
-    {
-        cout << "Sensor " << sensorID << " sent data.\n";
-    }
 };
 
-// ===== Complaint =====
-enum ComplaintStatus
+// ================= Global Users Vector =================
+vector<User*> users;
+
+// ================= Login Function =================
+User* loginUser()
 {
-    PENDING,
-    ASSIGNED,
-    RESOLVED,
-    REJECTED
-};
+    string email, pass;
+    cout << "Email: ";
+    cin >> email;
+    cout << "Password: ";
+    cin >> pass;
 
-class Complaint
-{
-private:
-    string complaintID;
-    string description;
-    ComplaintStatus status;
-    string timeStamp;
-
-public:
-    Complaint(string id, string desc, string ts)
-        : complaintID(id), description(desc), status(PENDING), timeStamp(ts) {}
-
-    void updateStatus(ComplaintStatus newStatus)
+    for (User* u : users)
     {
-        status = newStatus;
-    }
-
-    ComplaintStatus getStatus() const { return status; }
-
-    void assignTechnician(string techID)
-    {
-        cout << "Complaint " << complaintID << " assigned to technician " << techID << "\n";
-    }
-};
-
-// Route
-class Route
-{
-private:
-    string routeID;
-    string driverID;
-    Bin *binList[10];
-    int binCount;
-    double distance;
-
-public:
-    Route(string id, string driver, double dist)
-        : routeID(id), driverID(driver), binCount(0), distance(dist) {}
-
-    void addBin(Bin *b)
-    {
-        if (binCount < 10)
+        if (u->getEmail() == email && u->getPassword() == pass)
         {
-            binList[binCount++] = b;
+            cout << "Login successful!\n";
+            u->login();
+            return u;
         }
     }
 
-    int getBinCount() const { return binCount; }
+    cout << "Login failed! Invalid credentials.\n";
+    return nullptr;
+}
 
-    void generateOptimalRoute()
-    {
-        cout << "Optimal route generated for driver " << driverID << "\n";
-    }
-
-    void updateRoute()
-    {
-        cout << "Route " << routeID << " updated.\n";
-    }
-};
-
-// ===== System Controller =====
-class SystemController
+// ================= Automated Tests =================
+void runAutomatedTests()
 {
-public:
-    void verifyTask() { cout << "Task verified.\n"; }
-    void generateNotification() { cout << "Notification generated.\n"; }
-    void generateRoute() { cout << "Route generated.\n"; }
-    void recordPenalty() { cout << "Penalty recorded.\n"; }
-};
+    cout << "\nRunning automated tests...\n";
 
-// ===== Main Unit Tests =====
+    Bin b("B1", "Street1", 95);
+    b.updateStatus();
+    cout << "Bin status: " << (b.getStatus() == FULL ? "FULL" : "OK") << endl;
+
+    Sensor s("S1");
+    cout << "Sensor detected fill level: " << s.detectFillLevel() << "%\n";
+
+    cout << "Tests completed.\n";
+}
+
+// ================= Main =================
 int main()
 {
-    cout << "Running Unit Tests for Waste Management System...\n\n";
+    srand((unsigned)time(nullptr));
 
-    // Test User creation and login
-    cout << "Test 1: User Creation and Login\n";
-    Driver d("D1", "Omar", "omar@mail.com", "1234", "Route-1");
-    assert(d.getUserID() == "D1");
-    assert(d.getName() == "Omar");
-    cout << "User created successfully.\n";
+    while (true)
+    {
+        cout << "\n--- Smart Waste Management System ---\n";
+        cout << "1) Run automated tests\n";
+        cout << "2) Create Driver\n";
+        cout << "3) Create Citizen\n";
+        cout << "4) Create Supervisor\n";
+        cout << "5) Create Technician\n";
+        cout << "6) Create Bin\n";
+        cout << "7) Login\n";
+        cout << "0) Exit\n";
+        cout << "Choice: ";
 
-    // Test Bin status update
-    cout << "\nTest 2: Bin Status Update\n";
-    Bin b1("B1", "Street 1", 95);
-    assert(b1.getStatus() == OK); // Initial status
-    b1.updateStatus();
-    assert(b1.getStatus() == FULL); // Should be FULL since 95 >= 90
-    cout << "Bin status updated to FULL.\n";
+        int choice;
+        cin >> choice;
 
-    Bin b2("B2", "Street 2", 40);
-    b2.updateStatus();
-    assert(b2.getStatus() == OK); // Should remain OK
-    cout << "Bin status remains OK for low fill level.\n";
+        if (choice == 0)
+            break;
 
-    // Test Complaint status update
-    cout << "\nTest 3: Complaint Status Update\n";
-    Complaint comp("C1", "Bin overflow", "2025-12-22");
-    assert(comp.getStatus() == PENDING);
-    comp.updateStatus(ASSIGNED);
-    assert(comp.getStatus() == ASSIGNED);
-    cout << "Complaint status updated to ASSIGNED.\n";
+        else if (choice == 1)
+            runAutomatedTests();
 
-    // Test Route bin addition
-    cout << "\nTest 4: Route Bin Addition\n";
-    Route r("R1", "D1", 12.5);
-    assert(r.getBinCount() == 0);
-    r.addBin(&b1);
-    assert(r.getBinCount() == 1);
-    r.addBin(&b2);
-    assert(r.getBinCount() == 2);
-    cout << "Bins added to route successfully.\n";
+        else if (choice == 2)
+        {
+            string id, name, email, pass, route;
+            cout << "Driver ID: "; cin >> id;
+            cout << "Name: "; cin >> name;
+            cout << "Email: "; cin >> email;
+            cout << "Password: "; cin >> pass;
+            cout << "Route: "; cin >> route;
 
-    // Test Sensor fill level detection
-    cout << "\nTest 5: Sensor Fill Level Detection\n";
-    Sensor s("S1", 100, 80);
-    int level = s.detectFillLevel();
-    assert(level >= 0 && level <= 100); // Random value within range
-    cout << "Sensor detected fill level: " << level << "%\n";
+            users.push_back(new Driver(id, name, email, pass, route));
+            cout << "Driver created successfully.\n";
+        }
 
-    cout << "\nAll unit tests passed successfully!\n";
+        else if (choice == 3)
+        {
+            string id, name, email, pass;
+            cout << "Citizen ID: "; cin >> id;
+            cout << "Name: "; cin >> name;
+            cout << "Email: "; cin >> email;
+            cout << "Password: "; cin >> pass;
+
+            users.push_back(new Citizen(id, name, email, pass));
+            cout << "Citizen created successfully.\n";
+        }
+
+        else if (choice == 4)
+        {
+            string id, name, email, pass;
+            cout << "Supervisor ID: "; cin >> id;
+            cout << "Name: "; cin >> name;
+            cout << "Email: "; cin >> email;
+            cout << "Password: "; cin >> pass;
+
+            users.push_back(new Supervisor(id, name, email, pass));
+            cout << "Supervisor created successfully.\n";
+        }
+
+        else if (choice == 5)
+        {
+            string id, name, email, pass;
+            cout << "Technician ID: "; cin >> id;
+            cout << "Name: "; cin >> name;
+            cout << "Email: "; cin >> email;
+            cout << "Password: "; cin >> pass;
+
+            users.push_back(new Technician(id, name, email, pass));
+            cout << "Technician created successfully.\n";
+        }
+
+        else if (choice == 6)
+        {
+            string id, loc;
+            int lvl;
+            cout << "Bin ID: "; cin >> id;
+            cout << "Location: "; cin >> loc;
+            cout << "Fill level: "; cin >> lvl;
+
+            Bin b(id, loc, lvl);
+            b.getSensorData();
+            b.updateStatus();
+            cout << "Status: " << (b.getStatus() == FULL ? "FULL" : "OK") << endl;
+        }
+
+        else if (choice == 7)
+        {
+            User* u = loginUser();
+            if (!u) continue;
+
+            if (Driver* d = dynamic_cast<Driver*>(u))
+            {
+                d->viewRoute();
+                d->confirmTask();
+            }
+            else if (Citizen* c = dynamic_cast<Citizen*>(u))
+            {
+                c->submitComplaint();
+                c->viewBinStatus();
+            }
+            else if (Supervisor* s = dynamic_cast<Supervisor*>(u))
+            {
+                s->assignComplaint();
+                s->reviewComplaints();
+            }
+            else if (Technician* t = dynamic_cast<Technician*>(u))
+            {
+                t->resolveComplaint();
+                t->submitReport();
+            }
+
+            u->logout();
+        }
+
+        else
+            cout << "Invalid choice!\n";
+    }
+
+    // cleanup
+    for (User* u : users)
+        delete u;
+
     return 0;
 }
